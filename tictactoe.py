@@ -23,7 +23,14 @@ def make_move(board, row, col, player):
         return False
 
 
-def is_game_over(board):
+def is_game_over(board, round_number):
+    """
+    Check if game is over.
+    This function checks rows, columns, and diagonals for a winning combination.
+    If the board is full and there is no winning combination, it is a tie.
+    Return 1 if player won, 2 if tie, 0 if game is not over.
+    """
+
     # check rows
     for row in board:
         if row.count(row[0]) == len(row) and row[0] != " ":
@@ -37,12 +44,12 @@ def is_game_over(board):
 
     # check diagonals
     if board[0][0] == board[1][1] == board[2][2] and board[0][0] != " ":
-        return True
+        return 1
     if board[0][2] == board[1][1] == board[2][0] and board[0][2] != " ":
         return 1
 
     # check if board is full
-    if not any(" " in row for row in board):
+    if round_number == 9:
         return 2
 
     return 0
@@ -54,17 +61,23 @@ def switch_players(player):
 
 def is_valid_input(row_col):
     if len(row_col) != 2:
-        print("Error: Enter two values separated by a space.")
+        print("Error: Enter two values (each 0 - 2) separated by a space.")
         return False
     return True
 
 
 def within_range(row_col):
-    if MAX_ROW_COL < row_col[0] or MAX_ROW_COL < row_col[1]:
-        print(ERROR_MESSAGE + " Out of range.")
-        return False
+    try:
+        row_col = [int(i) for i in row_col]
+    except ValueError:
+        print(f"{ERROR_MESSAGE} Enter integers only.")
+        return None
 
-    return True
+    if row_col[0] < MIN_ROW_COL or MAX_ROW_COL < row_col[0] or row_col[1] < MIN_ROW_COL or MAX_ROW_COL < row_col[1]:
+        print(ERROR_MESSAGE + " Out of range.")
+        return None
+
+    return row_col
 
 
 def get_row_col():
@@ -73,6 +86,7 @@ def get_row_col():
         try:
             # get row and col in one line
             row_col = input("Enter row and col: ").split()
+
             if row_col[0] == "-1":
                 print("You quit the game.")
                 quit()
@@ -85,11 +99,12 @@ def get_row_col():
             row_col = [int(i) for i in row_col]
 
             # check if row and col are within range
-            if within_range(row_col):
+            row_col = within_range(row_col)
+            if row_col is not None:
                 return row_col
 
         except ValueError:
-            print(ERROR_MESSAGE + " Not a number.")
+            print(f"{ERROR_MESSAGE} Enter integers only.")
             continue
 
 
@@ -98,7 +113,7 @@ def main():
     round_number = 0
     successful_move = True
 
-    print("\nWelcome to TicTacToe! \nEvery turn, enter the row and column (z.B. '0 2') you want to place your move in or enter -1 to quit.")
+    print("\nWelcome to TicTacToe! \nEvery turn, enter the row and column (i.e. '0 2') you want to place your move in or enter -1 to quit.")
     while True:
         if successful_move:
             print(f"\nRound {round_number}:\n")
@@ -111,9 +126,8 @@ def main():
         row, col = get_row_col()
 
         if make_move(board, row, col, player):
-            player = switch_players(player)
             round_number += 1
-            game_over = is_game_over(board)
+            game_over = is_game_over(board, round_number)
 
             if game_over == 1:
                 print(f"Player {player} won!")
@@ -121,6 +135,8 @@ def main():
             elif game_over == 2:
                 print("It's a tie!")
                 break
+
+            player = switch_players(player)
             successful_move = True
         else:
             successful_move = False
